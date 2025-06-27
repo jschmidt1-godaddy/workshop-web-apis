@@ -7,7 +7,7 @@ This is a companion resource to Web Based APIs workshop. This is not required fo
 * curl - Probably already on your system. all you need
 * telnet - optional - might have to install(mac) or enable(windows)
 * jq - Optional. Just formats and prints things nicer
-* postman - Not used, but great HTTP client with a GUI and developer tooling
+* Postman - Not used today, but great HTTP client with a GUI and developer tooling
 
 ### Apis used
 * https://www.weather.gov/documentation/services-web-api
@@ -32,7 +32,7 @@ Google is forgiving, but most APIs require headers
 telnet icanhazdadjoke.com 80
 GET /
 ```
-results in a 400 status "Bad Request"
+results in the server terminating the session
 
 #### cURL and HTTPS
 Let's switch to curl, the most common http client there is. It is probably already installed on your command line. Let's request a dad joke with curl and we will tell curl to be verbose so we can see the headers and more.
@@ -56,12 +56,12 @@ Imagine a program that saved your favorite dad jokes. You'd want to easily be ab
 curl https://api.weather.gov/gridpoints/PSR/167,51/forecast
 curl https://api.weather.gov/gridpoints/PSR/167,51/forecast | jq .properties.periods[0].temperature
 ```
-The web is filled with all types of media so content negotiation is critical. Let's look at a joke I saved earlier. The documentation says I can fetch images of jokes, but If I try to do that with a program like curl that expects text and bad things happen.
+The web is filled with all types of media so content negotiation is critical. Let's look at a joke I saved earlier. The [documentation](https://icanhazdadjoke.com/api) says I can fetch images of jokes (and more!), but If I try to do that with a program like curl that expects text and bad things happen.
 ```
-curl https://icanhazdadjoke.com/j/kbUv4T0Ddxc
-curl --output - https://icanhazdadjoke.com/j/kbUv4T0Ddxc.png
+curl https://icanhazdadjoke.com/j/LuciNmbaMmb
+curl -i --output - https://icanhazdadjoke.com/j/LuciNmbaMmb.png
 ```
-
+Remember http just sends bytes, it is the client's job to process the data. cURL can't do that, but your browser can.
 ## API Design
 
 ### History
@@ -94,7 +94,7 @@ curl -i -X GET https://api.todoist.com/rest/v2/projects -H "Authorization: Beare
 ```
 I'll be using the -i so that curl displays the response headers which are great for debugging, but if you want a more succinct  response its optional. The -X GET specifies the HTTP GET verb. GET is the implicit default so we haven't provided it previously. Because I got a 200 response I know the server accepted my AuthN via the Authorization header. It is common for the header to start with the authentication scheme which in this case is Bearer auth. Bearer auth is typically just a way to say token auth.
 
-The response body above was a collection of project resources. We should be able to request the specific resource by ID. Also, let's see what happens if we do not authenticate at all
+The response body above was a collection of project resources. We should be able to request the specific resource by ID. However if your ID is wrong you will get the HTTP 404 not found status. Also, let's see what happens if we do not authenticate at all
 ```
 curl -i -X GET "https://api.todoist.com/rest/v2/projects/2315160149" -H "Authorization: Bearer ${MYAPITOKEN}"
 curl -i -X GET "https://api.todoist.com/rest/v2/projects"
@@ -103,23 +103,36 @@ As expected we received a status 401 error. Next let's CREATE a new project usin
 ```
 curl -i -X POST -H "Authorization: Bearer ${MYAPITOKEN}"  -H "Content-Type: application/json" "https://api.todoist.com/rest/v2/projects"  --data '{"name": "API Skill Goals"}'
 ```
-This will return a resource representing your new project, take note of it's id. Next we can add some tasks to that project and then list our collection of tasks.
+This will return a resource representing your new project, take note of it's id. We are going to set a bash terminal variable with it, just like with the API key. Sometimes you want environment variables you have set. You can list then with the env command use grep to filter for the ones you want.
 ```
 export MYPROJECT=ID_FROM_ABOVE
+env | grep MY
+```
+Next we can add some tasks to that project and then list our collection of tasks.
+```
 curl -i -X POST -H "Authorization: Bearer ${MYAPITOKEN}"  -H "Content-Type: application/json" "https://api.todoist.com/rest/v2/tasks"  --data '{"content": "Consume APIs", "project_id": "'"$MYPROJECT"'"}'
+
 curl -i -X POST -H "Authorization: Bearer ${MYAPITOKEN}"  -H "Content-Type: application/json" "https://api.todoist.com/rest/v2/tasks"  --data '{"content": "Build APIs", "project_id": "'"$MYPROJECT"'"}'
+
 curl -i -X POST -H "Authorization: Bearer ${MYAPITOKEN}"  -H "Content-Type: application/json" "https://api.todoist.com/rest/v2/tasks"  --data '{"content": "Profit", "project_id": "'"$MYPROJECT"'"}'
+
 curl -i -X GET -H "Authorization: Bearer ${MYAPITOKEN}" https://api.todoist.com/rest/v2/tasks
 ```
-Lets go look at the documentation for tasks: https://developer.todoist.com/rest/v2/#tasks. We can see all the properties for a task and how to interact with their API. Lets try updating a task and see our change take effect. We can also delete and mark a task done with the close api. You'll need to substitute your own task IDs below.
+Lets go look at the documentation for tasks: https://developer.todoist.com/rest/v2/#tasks. We can see all the properties for a task and how to interact with their API. Lets try updating a task and see our change take effect. You can go see the changes happening in your [project](https://app.todoist.com/app/projects/active) and also using the API itself.
+We will also also delete and mark a task done with the close api. You'll need to substitute your own task IDs below.
 ```
 export CONSUME=ID_FROM_ABOVE
 export BUILD=ID_FROM_ABOVE
 export PROFIT=ID_FROM_ABOVE
+# UPDATE (not really very RESTful)
 curl -i -X POST -H "Authorization: Bearer ${MYAPITOKEN}"  -H "Content-Type: application/json" "https://api.todoist.com/rest/v2/tasks/$PROFIT"  --data '{"priority": 4}'
+# GET (read) resource
 curl -i -H "Authorization: Bearer ${MYAPITOKEN}"  -H "Content-Type: application/json" "https://api.todoist.com/rest/v2/tasks/$PROFIT"
+# DELETE method/verb
 curl -i -H "Authorization: Bearer ${MYAPITOKEN}"  -X DELETE "https://api.todoist.com/rest/v2/tasks/$BUILD"
+# Not RESTful - Intent or action
 curl -i -X POST -H "Authorization: Bearer ${MYAPITOKEN}" "https://api.todoist.com/rest/v2/tasks/$CONSUME/close"
+# GET collection
 curl -i -X GET -H "Authorization: Bearer ${MYAPITOKEN}" https://api.todoist.com/rest/v2/tasks
 ```
 Here, you will see the Consume APIs task is closed.  The Build APIs task is deleted.  And the Profit task is set to priority=4.

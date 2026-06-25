@@ -11,14 +11,18 @@ This is a companion resource to Web Based APIs workshop. This is not required fo
 
 ### Apis used
 * https://www.weather.gov/documentation/services-web-api
-*  https://icanhazdadjoke.com/api
-* Other fun & free APIs: NASA, Spotify, Youtube, oMDB, Twitter, GitHub
+* https://icanhazdadjoke.com/api
+* Other fun & free APIs:
+  * NASA, Spotify, Youtube, oMDB, Twitter, GitHub
+  * https://github.com/public-apis/public-apis
+  * https://apilist.fun/
 
 ### Api design links
 * [REST white paper](https://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm)
 * https://restfulapi.net/
-* https://www.restapitutorial.com/httpstatuscodes.html
-* https://swagger.io/specification/
+* [Status Codes](https://www.restapitutorial.com/httpstatuscodes.html) or [With Cats](https://http.cat/)
+* [OpenAPI Spec](https://swagger.io/specification/)
+* [Swagger API Editor](https://editor.swagger.io/)
 
 ## HTTP
 #### Telnet HTTP
@@ -65,7 +69,7 @@ Remember http just sends bytes, it is the client's job to process the data. cURL
 ## API Design
 
 ### History
-Making a curl request using SOAP xml. (Wont work with windows CMD, try postman instead)
+Making a curl request using SOAP xml.
 ```
 curl --location 'https://www.dataaccess.com/webservicesserver/NumberConversion.wso' \
 --header 'Content-Type: text/xml; charset=utf-8' \
